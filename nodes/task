@@ -1,0 +1,91 @@
+#!/usr/bin/env python3
+
+
+import rospy
+import tf
+from Astar import *
+from tf.transformations import euler_from_quaternion
+from geometry_msgs.msg import Twist
+
+
+rospy.init_node('controller')
+
+listener = tf.TransformListener()
+velocity_publisher = rospy.Publisher('cmd_vel', Twist, queue_size=10)
+
+
+def pause():
+    listener.waitForTransform('/odom', '/base_footprint',
+                                            rospy.Time(), rospy.Duration(500))
+
+
+def Transformation():
+    (T, R) = listener.lookupTransform(
+                         '/odom', '/base_footprint', rospy.Time(0))
+        
+    x_cor, y_cor, z_cor = T
+    roll, pitch, yaw = euler_from_quaternion(R)
+
+    return x_cor, y_cor, yaw
+
+def cmd_vel(linear_vel, angular_vel):
+    vel = Twist()
+    vel.linear.x = linear_vel
+    vel.angular.z = angular_vel
+    velocity_publisher.publish(vel)
+    
+
+def main():
+    x_s, y_s, theta_start = 100, 100, 0
+
+    x_g, y_g = 900, 900
+    start_pos = (x_s, y_s, theta_start)
+    goal_pos = (x_g, y_g)
+    rpm1, rpm2 = 25, 50
+
+    all_actions = [(0, rpm1), (rpm1, 0), (rpm1, rpm1), (0, rpm2), (rpm2, 0), (rpm2, rpm2), (rpm1, rpm2), (rpm2, rpm1)]
+
+    path, explore = A_star(start_pos, goal_pos)
+
+
+    print('\n path found')
+    print('\n running')
+    
+    rospy.sleep(10)
+
+    pause()
+    rate = rospy.Rate(1)
+
+    r = 0.038 #in metres
+    L = 0.354 #in metres
+    dt = 10
+    pi = math.pi
+
+    for node in path[1:]:
+        UL, UR = node['action']
+
+        x, y, theta = node['parent']['pos']
+
+        UL = UL*2*pi/60
+        UR = UR*2*pi/60
+
+        theta_dot = (r / L) * (UR - UL) 
+        velocity_value = (r / 2) * (UL + UR)
+
+        xn, yn, yaw = Transformation()
+        yaw = (yaw)*180/np.pi
+        diff = ((theta - yaw) + 180) % 360 - 180
+        cmd_vel(velocity_value, theta_dot  + 0.03*diff)
+        rate.sleep()
+
+    cmd_vel(0, 0)
+
+main()
+
+if __name__ == '_main_':
+    try:
+       
+        main()
+    except rospy.ROSInterruptException:
+        rospy.loginfo("Task terminated.")
+    
