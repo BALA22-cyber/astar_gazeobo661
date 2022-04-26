@@ -19,6 +19,8 @@ source the file using $ source devel/setup.bash
 Start the environment by running the following command on terminal:
 - `roslaunch astar_gazebo661 astar_gazebo.launch`
 
+make sure to run the command " chmod +x task " for file named task in this location : catkin_ws/src/astar_gazebo661/nodes
+
 Dependancies
 numpy
 opencv
