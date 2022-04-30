@@ -5,7 +5,7 @@ In the following instructions, we assume your catkin workspace is named catkin_w
 
 - `cd ~/catkin_ws/src`
 - `git clone https://github.com/BALA22-cyber/astar_gazeobo661.git`
-- - rename the package as astar_gazebo661 from astar_gazebo661
+- - rename the package as astar_gazebo661 from astar_gazeobo661
 - `cd ~/catkin_ws`
 - `catkin build`
 - `source ~/catkin_ws/devel/setup.bash`
